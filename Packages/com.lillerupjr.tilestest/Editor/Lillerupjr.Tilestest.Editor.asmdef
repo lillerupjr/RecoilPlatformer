@@ -1,0 +1,10 @@
+{
+    "name": "Lillerupjr.Tilestest.Editor",
+    "references": [
+      "Lillerupjr.Tilestest"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}

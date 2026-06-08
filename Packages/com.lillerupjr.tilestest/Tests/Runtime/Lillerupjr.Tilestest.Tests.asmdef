@@ -1,0 +1,11 @@
+{
+    "name": "Lillerupjr.Tilestest.Tests",
+    "references": [
+        "Lillerupjr.Tilestest"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}

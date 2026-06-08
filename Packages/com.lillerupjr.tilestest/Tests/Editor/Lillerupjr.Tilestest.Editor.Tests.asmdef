@@ -1,0 +1,14 @@
+{
+    "name": "Lillerupjr.Tilestest.Editor.Tests",
+    "references": [
+        "Lillerupjr.Tilestest.Editor",
+        "Lillerupjr.Tilestest"
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": []
+}
