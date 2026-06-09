@@ -1208,13 +1208,35 @@ MonoBehaviour:
   gunDiagonal: {fileID: 21300000, guid: e14c418c8e11f0d4691290ff72465ed0, type: 3}
   gunDiagonalFlipY: 0
   gunDiagonalOffset: {x: 0, y: -0.5}
+  gunDiagonalRotation: 0
   runAnchorOffset: {x: 0.32, y: -0.2}
   jumpAnchorOffset: {x: 0.32, y: -0.1}
   fireCooldown: 1
   recoilForce: 14
   controlLockout: 0.12
   maxRecoilSpeed: 0
-  muzzleRange: 20
+  pelletPrefab: {fileID: 5585256107261112957, guid: e4455056e4d48f647a90ea1dda710cf3, type: 3}
+  pelletCount: 3
+  spreadDegrees: 12
+  pelletDamage: 1
+  muzzle: {fileID: 0}
+  muzzleOffset: 1
+--- !u!114 &1674915855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1674915842}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6356a906c5b67294c9a22a6cec086ef6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth2D
+  maxLives: 4
+  hitInvulnerability: 0.8
+  controller: {fileID: 0}
+  bodySpriteRenderer: {fileID: 0}
 --- !u!1001 &1729336181
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4463,6 +4485,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 5835759703154551278, guid: 80d53a508b4eb4346acd65bed0633f56, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1674915852}
+    - targetCorrespondingSourceObject: {fileID: 5835759703154551278, guid: 80d53a508b4eb4346acd65bed0633f56, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1674915855}
     - targetCorrespondingSourceObject: {fileID: 66176139985447556, guid: 80d53a508b4eb4346acd65bed0633f56, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2138741272}

@@ -58,9 +58,16 @@ public class ShotgunRecoil2D : MonoBehaviour
     [Tooltip("Clamp total speed right after a shot. 0 = uncapped.")]
     [SerializeField] private float maxRecoilSpeed = 0f;
 
-    [Header("Feedback")]
-    [Tooltip("Length of the debug muzzle ray drawn on fire.")]
-    [SerializeField] private float muzzleRange = 20f;
+    [Header("Projectiles")]
+    [Tooltip("Pellet prefab (Projectile2D). Each shot fires pelletCount of these in a spread.")]
+    [SerializeField] private Projectile2D pelletPrefab;
+    [SerializeField] private int pelletCount = 3;
+    [Tooltip("Total spread cone in degrees; pellets fan evenly across it.")]
+    [SerializeField] private float spreadDegrees = 12f;
+    [SerializeField] private int pelletDamage = 1;
+    [Tooltip("Muzzle spawn point. Falls back to ArmPivot + aim * muzzleOffset when unset.")]
+    [SerializeField] private Transform muzzle;
+    [SerializeField] private float muzzleOffset = 1f;
 
     private PlayerController2D controller;
     private Camera cam;
@@ -226,14 +233,36 @@ public class ShotgunRecoil2D : MonoBehaviour
 
         // Recoil pushes opposite the aim direction.
         controller.ApplyRecoil(-aimDirection * recoilForce, controlLockout, maxRecoilSpeed);
-
-        if (armPivot != null)
-        {
-            Debug.DrawRay(armPivot.position, aimDirection * muzzleRange, Color.cyan, 0.1f);
-        }
+        FirePellets();
 
         cooldownTimer = fireCooldown;
         fireQueued = false;
+    }
+
+    private void FirePellets()
+    {
+        if (pelletPrefab == null || armPivot == null)
+        {
+            return;
+        }
+
+        Vector2 origin = muzzle != null
+            ? (Vector2)muzzle.position
+            : (Vector2)armPivot.position + aimDirection * muzzleOffset;
+
+        int count = Mathf.Max(1, pelletCount);
+        float baseAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
+        // Fan evenly across the spread cone; a single pellet fires straight down the aim.
+        float start = count > 1 ? -spreadDegrees * 0.5f : 0f;
+        float step = count > 1 ? spreadDegrees / (count - 1) : 0f;
+
+        for (int i = 0; i < count; i++)
+        {
+            float angle = (baseAngle + start + step * i) * Mathf.Deg2Rad;
+            Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+            Projectile2D pellet = Instantiate(pelletPrefab, origin, Quaternion.identity);
+            pellet.Launch(dir, gameObject, pelletDamage);
+        }
     }
 
     private void OnDrawGizmosSelected()

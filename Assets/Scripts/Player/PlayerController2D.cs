@@ -16,6 +16,13 @@ public class PlayerController2D : MonoBehaviour
     [Tooltip("Extra gravity factor applied while falling so the descent feels weighty.")]
     [SerializeField] private float fallMultiplier = 2.5f;
 
+    [Header("Recoil")]
+    [Tooltip("Cancels this fraction of the velocity that opposes a recoil impulse before it is "
+        + "applied. 0 = pure additive (recoil feels weak when fired into fast momentum, e.g. a "
+        + "hard fall); 1 = recoil lands consistently regardless of incoming speed.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float recoilOpposingCancel = 1f;
+
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Vector2 groundCheckSize = new Vector2(0.7f, 0.15f);
@@ -116,6 +123,18 @@ public class PlayerController2D : MonoBehaviour
     // place; ShotgunRecoil2D computes the impulse and calls in.
     public void ApplyRecoil(Vector2 impulse, float lockout, float maxSpeed)
     {
+        // Cancel the part of current velocity fighting the recoil so incoming momentum (e.g. a
+        // fast fall) doesn't eat the impulse — keeps recoil feeling consistent across speeds.
+        if (recoilOpposingCancel > 0f && impulse.sqrMagnitude > 0.0001f)
+        {
+            Vector2 dir = impulse.normalized;
+            float opposing = Vector2.Dot(rb.linearVelocity, dir);
+            if (opposing < 0f)
+            {
+                rb.linearVelocity -= dir * (opposing * recoilOpposingCancel);
+            }
+        }
+
         rb.AddForce(impulse, ForceMode2D.Impulse);
 
         if (maxSpeed > 0f && rb.linearVelocity.magnitude > maxSpeed)
@@ -203,7 +222,8 @@ public class PlayerController2D : MonoBehaviour
             || Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand);
     }
 
-    private void ResetToSpawn()
+    // Public so PlayerHealth2D can respawn the player on death (and the reset hotkey uses it).
+    public void ResetToSpawn()
     {
         // rb.position teleports cleanly without an interpolation smear.
         rb.position = spawnPosition;

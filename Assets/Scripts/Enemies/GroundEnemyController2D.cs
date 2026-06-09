@@ -24,9 +24,11 @@ public abstract class GroundEnemyController2D : MonoBehaviour
 
     [Header("Ground Checks")]
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private float groundCheckRadius = 0.08f;
-    [SerializeField] private float wallCheckRadius = 0.08f;
-    [SerializeField] private float ledgeCheckRadius = 0.08f;
+    [SerializeField] private Vector2 groundCheckSize = new Vector2(0.35f, 0.12f);
+    [SerializeField] private Vector2 wallCheckSize = new Vector2(0.12f, 0.55f);
+    [SerializeField] private Vector2 ledgeCheckSize = new Vector2(0.35f, 0.12f);
+    [SerializeField] private float minimumDirectionalCheckOffset = 0.05f;
+    [SerializeField] private float turnCooldown = 0.12f;
 
     [Header("Attack")]
     [SerializeField] private int attackDamage = 1;
@@ -36,6 +38,10 @@ public abstract class GroundEnemyController2D : MonoBehaviour
     [SerializeField] private float attackActiveTime = 0.15f;
     [SerializeField] private float attackRecovery = 0.35f;
 
+    [Header("Death")]
+    [Tooltip("Seconds the corpse lingers before it despawns.")]
+    [SerializeField] private float despawnDelay = 5f;
+
     private Rigidbody2D rb;
     private EnemyHealth2D health;
     private Transform target;
@@ -44,6 +50,7 @@ public abstract class GroundEnemyController2D : MonoBehaviour
     private float ledgeCheckLocalX;
     private float attackPointLocalX;
     private float attackCooldownTimer;
+    private float turnCooldownTimer;
     private float attackTimer;
     private bool attackHitApplied;
     private bool missingReceiverLoggedThisAttack;
@@ -104,6 +111,7 @@ public abstract class GroundEnemyController2D : MonoBehaviour
         }
 
         attackCooldownTimer -= Time.fixedDeltaTime;
+        turnCooldownTimer -= Time.fixedDeltaTime;
 
         if (state == EnemyState.Attack)
         {
@@ -135,9 +143,16 @@ public abstract class GroundEnemyController2D : MonoBehaviour
 
     protected virtual void Patrol()
     {
-        if (ShouldTurnAround())
+        if (!HasGroundBelow())
+        {
+            StopHorizontalMovement();
+            return;
+        }
+
+        if (turnCooldownTimer <= 0f && ShouldTurnAround())
         {
             TurnAround();
+            turnCooldownTimer = turnCooldown;
         }
 
         MoveHorizontally(patrolSpeed);
@@ -151,7 +166,7 @@ public abstract class GroundEnemyController2D : MonoBehaviour
             SetFacingDirection(xDelta > 0f ? 1 : -1);
         }
 
-        if (!HasGroundAhead())
+        if (!HasGroundBelow() || (HasUsableLedgeCheck() && !HasGroundAhead()))
         {
             StopHorizontalMovement();
             return;
@@ -259,6 +274,15 @@ public abstract class GroundEnemyController2D : MonoBehaviour
         StopHorizontalMovement();
         animatorBridge?.SetSpeed(0f);
         animatorBridge?.SetDead(true);
+
+        // Stop the corpse from blocking/pushing the player, but keep it resting on the ground
+        // (only the player's layer is excluded, not Ground).
+        foreach (Collider2D col in GetComponentsInChildren<Collider2D>())
+        {
+            col.excludeLayers = col.excludeLayers.value | targetLayer.value;
+        }
+
+        Destroy(gameObject, despawnDelay);
     }
 
     private void AcquireOrReleaseTarget()
@@ -310,19 +334,36 @@ public abstract class GroundEnemyController2D : MonoBehaviour
 
     private bool ShouldTurnAround()
     {
-        return HasWallAhead() || !HasGroundAhead();
+        return (HasUsableWallCheck() && HasWallAhead())
+            || (HasUsableLedgeCheck() && !HasGroundAhead());
+    }
+
+    private bool HasGroundBelow()
+    {
+        return groundCheck != null
+            && Physics2D.OverlapBox(groundCheck.position, groundCheckSize, 0f, groundLayer) != null;
     }
 
     private bool HasWallAhead()
     {
         return wallCheck != null
-            && Physics2D.OverlapCircle(wallCheck.position, wallCheckRadius, groundLayer) != null;
+            && Physics2D.OverlapBox(wallCheck.position, wallCheckSize, 0f, groundLayer) != null;
     }
 
     private bool HasGroundAhead()
     {
         return ledgeCheck != null
-            && Physics2D.OverlapCircle(ledgeCheck.position, ledgeCheckRadius, groundLayer) != null;
+            && Physics2D.OverlapBox(ledgeCheck.position, ledgeCheckSize, 0f, groundLayer) != null;
+    }
+
+    private bool HasUsableWallCheck()
+    {
+        return wallCheck != null && wallCheckLocalX > minimumDirectionalCheckOffset;
+    }
+
+    private bool HasUsableLedgeCheck()
+    {
+        return ledgeCheck != null && ledgeCheckLocalX > minimumDirectionalCheckOffset;
     }
 
     private void MoveHorizontally(float speed)
@@ -390,12 +431,12 @@ public abstract class GroundEnemyController2D : MonoBehaviour
             Gizmos.DrawWireSphere(attackPoint.position, attackRange);
         }
 
-        DrawCheckGizmo(groundCheck, groundCheckRadius, Color.green);
-        DrawCheckGizmo(wallCheck, wallCheckRadius, Color.cyan);
-        DrawCheckGizmo(ledgeCheck, ledgeCheckRadius, Color.magenta);
+        DrawCheckGizmo(groundCheck, groundCheckSize, Color.green);
+        DrawCheckGizmo(wallCheck, wallCheckSize, Color.cyan);
+        DrawCheckGizmo(ledgeCheck, ledgeCheckSize, Color.magenta);
     }
 
-    private static void DrawCheckGizmo(Transform check, float radius, Color color)
+    private static void DrawCheckGizmo(Transform check, Vector2 size, Color color)
     {
         if (check == null)
         {
@@ -403,7 +444,7 @@ public abstract class GroundEnemyController2D : MonoBehaviour
         }
 
         Gizmos.color = color;
-        Gizmos.DrawWireSphere(check.position, radius);
+        Gizmos.DrawWireCube(check.position, size);
     }
 
     private static float GetAbsoluteLocalX(Transform check)
