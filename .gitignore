@@ -105,3 +105,12 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# --- Project-specific ---
+# JetBrains Rider IDE config
+.idea/
+# Visual Studio upgrade log
+/[Uu]pgrade[Ll]og.htm
+# MCP-generated Game-view screenshots (regenerated on demand)
+/[Aa]ssets/[Ss]creenshots/
+/[Aa]ssets/[Ss]creenshots.meta
