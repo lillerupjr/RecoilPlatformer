@@ -10,6 +10,14 @@ design/reference notes that don't belong in the terse CLAUDE.md.
   TilemapCollider2D — *not* the legacy "Used By Composite" toggle.
 - Do **not** use "Used By Effector" for tilemap compositing.
 
+## Tilemap Composite Collider setup
+- TilemapCollider2D: **Composite Operation = Merge**.
+- Add a **Composite Collider 2D** component to the tilemap GameObject.
+- The tilemap's **Rigidbody2D should be Static**.
+- Composite **Geometry Type = Outlines**.
+- If seam-catching persists: bump **Extrusion Factor ~0.01**, or put a **Capsule Collider**
+  on the player.
+
 ## Rendering / camera
 - Project is **URP 2D**. Sprites use the `Sprite-Unlit-Default` material.
 - **Main Camera is Orthographic** (size 5 → 10-unit-tall viewport). Switched from the default
@@ -27,6 +35,19 @@ design/reference notes that don't belong in the terse CLAUDE.md.
   slicing causes teleporting on flip because the character sits in the left part of each frame.
 - Only ever flip `Body`'s SpriteRenderer via `flipX` — never flip the Player parent (it's the
   stable physics object; flipping it breaks colliders and child positions).
+
+## Facing anchors and physics probes
+- Never flip Player/enemy parent roots; they are stable physics objects and flipping them breaks
+  colliders and child positions.
+- Flip only visual SpriteRenderers via `flipX`.
+- Facing-dependent child anchors **do** mirror by local X. `GunPivot`, enemy `AttackPoint`,
+  `WallCheck`, and `LedgeCheck` should move to the facing side while the root collider stays
+  stable. This keeps gameplay probes and hit areas aligned with the sprite without scaling the
+  physics root.
+- Player ground detection uses `Physics2D.OverlapBox` with a tunable size against `groundLayer`.
+- Enemy ground/wall/ledge probes should follow the same dimensioned-check pattern once tuned:
+  prefer serialized box/capsule sizes over radius-only circles so checks can match sprite and
+  collider proportions in the Scene view.
 
 ## Parallax background (`ParallaxLayer2D`)
 - `scrollSpeed`: apparent on-screen speed (0 = far/slow, 1 = near/fast). Internally the layer

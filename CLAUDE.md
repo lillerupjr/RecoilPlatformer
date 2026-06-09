@@ -4,9 +4,11 @@
 2D cyberpunk recoil-platformer prototype built in Unity 6. Core mechanic: high-recoil shotgun used for both combat and traversal. Keyboard/mouse controls with 8-direction quantized mouse aim. First milestone is a greybox recoil test room.
 
 ## Docs
-Design/reference notes live in **`.claude/docs/`** (versioned with the repo). Start with
-`.claude/docs/unity6-notes.md` for Unity 6 specifics, camera/parallax conventions, and the
-Unity-MCP gotchas. Keep this CLAUDE.md terse; put longer notes in `.claude/docs/`.
+Design/reference notes live in **`.claude/docs/`** (versioned with the repo):
+- `.claude/docs/roadmap.md` — milestone roadmap (source of truth; MEMORY.md points here)
+- `.claude/docs/unity6-notes.md` — Unity 6 specifics, camera/parallax conventions, MCP gotchas
+
+Keep this CLAUDE.md terse; put longer notes in `.claude/docs/`.
 
 ## Tech Stack
 - Unity 6 (uses `rb.linearVelocity` not `rb.velocity`)
@@ -53,14 +55,17 @@ Assets/
 Player              # Rigidbody2D, BoxCollider2D, PlayerController2D
   Body              # SpriteRenderer, Animator
   GroundCheck       # Transform used for ground detection
-  GunPivot          # (future) gun attachment point
+  ArmPivot          # Aim anchor; the right Arm renderer rotates around it to follow the mouse
+    Arm             # SpriteRenderer (weapon arm); ShotgunRecoil2D swaps E/SE sprite + rotates
 ```
 
 ## Key Rules
 
-### Never flip the Player parent
-- Only flip `Body`'s SpriteRenderer via `bodySpriteRenderer.flipX`
-- The Player parent is the stable physics object; flipping it breaks colliders and child positions
+### Never flip physics roots
+- Only flip visual SpriteRenderers (for example `Body` via `bodySpriteRenderer.flipX`)
+- Player/enemy parents are stable physics roots; flipping them breaks colliders and child positions
+- Mirror facing-dependent child anchors by local X instead: `ArmPivot`, enemy `AttackPoint`,
+  `WallCheck`, and `LedgeCheck` should move to the facing side while the root stays unflipped
 
 ### Unity 6 API differences
 - Use `rb.linearVelocity` instead of `rb.velocity`
@@ -95,6 +100,8 @@ Player              # Rigidbody2D, BoxCollider2D, PlayerController2D
 - Use `[SerializeField] private` for inspector fields, not public
 - Use `[Header("Section")]` to organize inspector groups
 - Ground check uses `Physics2D.OverlapBox` against a `groundLayer` LayerMask
+- Enemy ground/wall/ledge checks should also use dimensioned checks (box/capsule style) rather
+  than radius-only circles once tuned, matching the player ground-check pattern
 - Keep physics in `FixedUpdate`, input reading in `Update`
 - Prefer direct `rb.linearVelocity` assignment for snappy platformer controls
 

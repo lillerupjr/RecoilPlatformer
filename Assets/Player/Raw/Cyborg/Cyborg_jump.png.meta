@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a17270cf7ef18354cb06814e1012b22a
+guid: e7d47dd7d04a5de489f6a995f3eb5cd4
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -110,7 +110,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Cyborg_jump_0
+      name: Cyborg_Jump_0
       rect:
         serializedVersion: 2
         x: 0
@@ -125,14 +125,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 34365afca92cf734e9b514f4f9e88e48
-      internalID: -1046654332
+      spriteID: 2d2f1333d92844a4b8139fce7bdebbc0
+      internalID: 1392001399
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Cyborg_jump_1
+      name: Cyborg_Jump_1
       rect:
         serializedVersion: 2
         x: 48
@@ -147,14 +147,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: f2e96f17572797744a50b6ec9b07985b
-      internalID: 471033419
+      spriteID: fc4599eab02921144bafead005df73eb
+      internalID: 1675641724
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Cyborg_jump_2
+      name: Cyborg_Jump_2
       rect:
         serializedVersion: 2
         x: 96
@@ -169,14 +169,14 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: fb737d16078b656498be7ac9c6ed177e
-      internalID: 1020640762
+      spriteID: 6c644207ac437f24c9f821ec47221aac
+      internalID: -1803278788
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Cyborg_jump_3
+      name: Cyborg_Jump_3
       rect:
         serializedVersion: 2
         x: 144
@@ -191,8 +191,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 8f744d22edabfef4aac42cd5bd55adcc
-      internalID: -1139155697
+      spriteID: cc45539824712eb4fb42a440c32ea9c9
+      internalID: -314125479
       vertices: []
       indices: 
       edges: []
@@ -201,7 +201,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: aa0923eb99cbab3448f5d20d755bd16a
+    spriteID: d13d8f84d63ea634283da2ced4c2d6d7
     internalID: 0
     vertices: []
     indices: 
@@ -213,10 +213,10 @@ TextureImporter:
       - key: SpriteEditor.SliceSettings
         value: '{"sliceOnImport":false,"gridCellCount":{"x":1.0,"y":1.0},"gridSpriteSize":{"x":32.0,"y":48.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":16.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":1,"keepEmptyRects":false,"isAlternate":false}'
     nameFileIdTable:
-      Cyborg_jump_0: -1046654332
-      Cyborg_jump_1: 471033419
-      Cyborg_jump_2: 1020640762
-      Cyborg_jump_3: -1139155697
+      Cyborg_Jump_0: 1392001399
+      Cyborg_Jump_1: 1675641724
+      Cyborg_Jump_2: -1803278788
+      Cyborg_Jump_3: -314125479
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

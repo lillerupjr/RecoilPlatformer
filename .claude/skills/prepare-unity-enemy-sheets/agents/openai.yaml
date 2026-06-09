@@ -1,0 +1,7 @@
+interface:
+  display_name: "Prepare Unity Enemy Sheets"
+  short_description: "Ready enemy sheets for Unity controllers"
+  default_prompt: "Use $prepare-unity-enemy-sheets to prepare this enemy sprite-sheet folder for Animator Controller creation."
+
+policy:
+  allow_implicit_invocation: true
