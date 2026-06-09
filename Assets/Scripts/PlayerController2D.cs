@@ -15,14 +15,20 @@ public class PlayerController2D : MonoBehaviour
     [SerializeField] private Animator bodyAnimator;
     [SerializeField] private SpriteRenderer bodySpriteRenderer;
 
+    [Header("Respawn")]
+    [Tooltip("Pressed with Ctrl (Windows) or Cmd (macOS) held to reset the player to spawn.")]
+    [SerializeField] private KeyCode resetKey = KeyCode.R;
+
     private Rigidbody2D rb;
     private float moveInput;
     private bool jumpPressed;
     private bool isGrounded;
+    private Vector2 spawnPosition;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        spawnPosition = transform.position;
     }
 
     private void Update()
@@ -32,6 +38,11 @@ public class PlayerController2D : MonoBehaviour
         if (Input.GetButtonDown("Jump"))
         {
             jumpPressed = true;
+        }
+
+        if (Input.GetKeyDown(resetKey) && IsResetModifierHeld())
+        {
+            ResetToSpawn();
         }
     }
 
@@ -99,6 +110,19 @@ public class PlayerController2D : MonoBehaviour
         bodyAnimator.SetFloat("Speed", Mathf.Abs(moveInput));
         bodyAnimator.SetBool("IsGrounded", isGrounded);
         bodyAnimator.SetFloat("VerticalVelocity", rb.linearVelocity.y);
+    }
+
+    private bool IsResetModifierHeld()
+    {
+        return Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.RightControl)
+            || Input.GetKey(KeyCode.LeftCommand) || Input.GetKey(KeyCode.RightCommand);
+    }
+
+    private void ResetToSpawn()
+    {
+        // rb.position teleports cleanly without an interpolation smear.
+        rb.position = spawnPosition;
+        rb.linearVelocity = Vector2.zero;
     }
 
     private void OnDrawGizmosSelected()
