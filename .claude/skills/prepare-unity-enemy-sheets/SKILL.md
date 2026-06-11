@@ -9,6 +9,9 @@ description: Prepare raw Unity 2D enemy sprite-sheet folders into Animator-Contr
 
 Convert a raw enemy sheet collection into a single Unity asset folder that is ready for an Animator Controller. Include body animations and projectile sheets in the same folder. Do not create the Animator Controller or enemy behavior logic in this workflow.
 
+For enemy controller/prefab behavior conventions after sheet prep, see
+`.claude/docs/enemy-behavior.md`.
+
 ## Target Layout
 
 Use one folder per enemy:

@@ -12,7 +12,7 @@ GameObject:
   m_Layer: 0
   m_Name: AttackPoint
   m_TagString: Untagged
-  m_Icon: {fileID: 0}
+  m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
@@ -160,68 +160,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyAnimator2D
   animator: {fileID: 5556059226399784618}
   bodySpriteRenderer: {fileID: 6930443685374408552}
---- !u!1 &7854840655125081745
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 38657965965402857}
-  m_Layer: 0
-  m_Name: SurfaceProbe
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &38657965965402857
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7854840655125081745}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.55, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7913348639583292981}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &8865274741658403839
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1022339922981168059}
-  m_Layer: 0
-  m_Name: ForwardProbe
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1022339922981168059
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8865274741658403839}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.75, y: -0.55, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7913348639583292981}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8977386825364220193
 GameObject:
   m_ObjectHideFlags: 0
@@ -235,6 +173,7 @@ GameObject:
   - component: {fileID: 2442975292926991482}
   - component: {fileID: 5487142111073248558}
   - component: {fileID: 1327509593883318026}
+  - component: {fileID: 1907252093562566234}
   m_Layer: 0
   m_Name: RoboSpider
   m_TagString: Untagged
@@ -256,8 +195,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7608489241936395352}
-  - {fileID: 38657965965402857}
-  - {fileID: 1022339922981168059}
   - {fileID: 1523196348180820454}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -322,7 +259,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.2}
+  m_Offset: {x: -0.055786133, y: -0.5642692}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -332,7 +269,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1.45, y: 0.9}
+  m_Size: {x: 2.2533188, y: 1.8929923}
   m_EdgeRadius: 0
 --- !u!114 &5487142111073248558
 MonoBehaviour:
@@ -361,17 +298,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoboSpiderController2D
   animatorBridge: {fileID: 6033529965918299873}
-  bodySpriteRenderer: {fileID: 6930443685374408552}
-  surfaceProbe: {fileID: 38657965965402857}
-  forwardProbe: {fileID: 1022339922981168059}
   attackPoint: {fileID: 1523196348180820454}
   crawlSpeed: 1.4
-  chaseSpeed: 2.2
   initialFacingDirection: 1
-  surfaceSnapDistance: 0.55
-  cornerProbeDistance: 0.6
-  detectionRange: 6
-  loseTargetRange: 8
+  surfaceOffset: 1.5
+  spawnSearchRadius: 3
   targetLayer:
     serializedVersion: 2
     m_Bits: 1
@@ -385,3 +316,21 @@ MonoBehaviour:
   attackActiveTime: 0.15
   attackRecovery: 0.35
   despawnDelay: 5
+--- !u!114 &1907252093562566234
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8977386825364220193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 011da70bb1f469b49953e5a5e45eda31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyContactDamage2D
+  contactDamage: 1
+  targetLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  contactBoxSize: {x: 2, y: 1.5}
+  contactBoxOffset: {x: 0, y: -0.75}

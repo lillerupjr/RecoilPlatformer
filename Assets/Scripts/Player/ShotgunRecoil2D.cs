@@ -47,8 +47,8 @@ public class ShotgunRecoil2D : MonoBehaviour
     [SerializeField] private Vector2 jumpAnchorOffset = Vector2.zero;
 
     [Header("Fire")]
-    [Tooltip("Seconds between shots. Infinite ammo for the greybox.")]
-    [SerializeField] private float fireCooldown = 0.25f;
+    [Tooltip("Seconds between shots. Refreshed to ready on a pogo hit. Infinite ammo for the greybox.")]
+    [SerializeField] private float fireCooldown = 1f;
 
     [Header("Recoil")]
     [Tooltip("Impulse magnitude in velocity units (Rigidbody2D mass is 1).")]
@@ -57,6 +57,21 @@ public class ShotgunRecoil2D : MonoBehaviour
     [SerializeField] private float controlLockout = 0.12f;
     [Tooltip("Clamp total speed right after a shot. 0 = uncapped.")]
     [SerializeField] private float maxRecoilSpeed = 0f;
+
+    [Header("Pogo")]
+    [Tooltip("How far the pogo probe reaches along the aim, in world units.")]
+    [SerializeField] private float pogoProbeDistance = 1.8f;
+    [Tooltip("Probe thickness — forgiveness for the 8-direction aim.")]
+    [SerializeField] private float pogoProbeRadius = 0.4f;
+    [Tooltip("Extra recoil impulse added on top of recoilForce when a pogo target is hit.")]
+    [SerializeField] private float pogoBonus = 10f;
+    [Tooltip("Cooldown applied after a pogo refresh (instead of 0) — a small grace so the next "
+        + "shot is a deliberate beat, not a same-frame re-fire.")]
+    [SerializeField] private float pogoGracePeriod = 0.10f;
+    [Tooltip("Layers the probe scans for pogo targets (hazards + enemies).")]
+    [SerializeField] private LayerMask pogoLayers;
+    [Tooltip("Geometry that blocks the probe so you can't pogo through walls/floors.")]
+    [SerializeField] private LayerMask blockerLayers;
 
     [Header("Projectiles")]
     [Tooltip("Pellet prefab (Projectile2D). Each shot fires pelletCount of these in a spread.")]
@@ -231,12 +246,83 @@ public class ShotgunRecoil2D : MonoBehaviour
             return;
         }
 
-        // Recoil pushes opposite the aim direction.
-        controller.ApplyRecoil(-aimDirection * recoilForce, controlLockout, maxRecoilSpeed);
+        // A pogo hit on a hazard / alive enemy boosts the recoil and refreshes the cooldown,
+        // letting the player chain shots into movement.
+        bool pogo = ProbePogo();
+
+        // Recoil pushes opposite the aim direction (extra impulse on a pogo).
+        float force = recoilForce + (pogo ? pogoBonus : 0f);
+        controller.ApplyRecoil(-aimDirection * force, controlLockout, maxRecoilSpeed);
         FirePellets();
 
-        cooldownTimer = fireCooldown;
+        cooldownTimer = pogo ? pogoGracePeriod : fireCooldown;
         fireQueued = false;
+    }
+
+    // Casts a forgiving circle along the aim. Returns true if the nearest thing in reach is a
+    // pogo target (hazard or alive enemy); a wall/floor in front blocks it; dead enemies and
+    // other colliders are looked past.
+    private bool ProbePogo()
+    {
+        Vector2 origin = MuzzleOrigin();
+        int mask = pogoLayers.value | blockerLayers.value;
+        RaycastHit2D[] hits = Physics2D.CircleCastAll(
+            origin, pogoProbeRadius, aimDirection, pogoProbeDistance, mask);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit2D hit in hits)
+        {
+            Collider2D col = hit.collider;
+            if (col == null)
+            {
+                continue;
+            }
+
+            // Never the player itself.
+            if (col.transform == transform || col.transform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            // A wall/floor in front blocks the pogo.
+            if ((blockerLayers.value & (1 << col.gameObject.layer)) != 0)
+            {
+                return false;
+            }
+
+            if (IsPogoable(col))
+            {
+                return true;
+            }
+
+            // Non-pogoable, non-blocking (e.g. a dead enemy) — look past it.
+        }
+
+        return false;
+    }
+
+    private bool IsPogoable(Collider2D col)
+    {
+        HazardContactDamage2D hazard = col.GetComponentInParent<HazardContactDamage2D>();
+        if (hazard != null)
+        {
+            return hazard.Pogoable;
+        }
+
+        IDamageable2D damageable = col.GetComponentInParent<IDamageable2D>();
+        return damageable != null && damageable.IsAlive;
+    }
+
+    // Shared shot origin for pellets and the pogo probe.
+    private Vector2 MuzzleOrigin()
+    {
+        if (muzzle != null)
+        {
+            return muzzle.position;
+        }
+
+        Vector2 basePos = armPivot != null ? (Vector2)armPivot.position : (Vector2)transform.position;
+        return basePos + aimDirection * muzzleOffset;
     }
 
     private void FirePellets()
@@ -246,9 +332,7 @@ public class ShotgunRecoil2D : MonoBehaviour
             return;
         }
 
-        Vector2 origin = muzzle != null
-            ? (Vector2)muzzle.position
-            : (Vector2)armPivot.position + aimDirection * muzzleOffset;
+        Vector2 origin = MuzzleOrigin();
 
         int count = Mathf.Max(1, pelletCount);
         float baseAngle = Mathf.Atan2(aimDirection.y, aimDirection.x) * Mathf.Rad2Deg;
@@ -274,5 +358,13 @@ public class ShotgunRecoil2D : MonoBehaviour
 
         Gizmos.color = Color.cyan;
         Gizmos.DrawRay(armPivot.position, aimDirection * 2f);
+
+        // Pogo probe reach (origin + swept circle along the aim).
+        Vector2 origin = MuzzleOrigin();
+        Vector2 end = origin + aimDirection * pogoProbeDistance;
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireSphere(origin, pogoProbeRadius);
+        Gizmos.DrawWireSphere(end, pogoProbeRadius);
+        Gizmos.DrawLine(origin, end);
     }
 }

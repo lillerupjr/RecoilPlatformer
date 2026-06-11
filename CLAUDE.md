@@ -7,6 +7,7 @@
 Design/reference notes live in **`.claude/docs/`** (versioned with the repo):
 - `.claude/docs/roadmap.md` — milestone roadmap (source of truth; MEMORY.md points here)
 - `.claude/docs/unity6-notes.md` — Unity 6 specifics, camera/parallax conventions, MCP gotchas
+- `.claude/docs/enemy-behavior.md` - enemy asset/controller conventions and current AI behavior
 
 Keep this CLAUDE.md terse; put longer notes in `.claude/docs/`.
 
@@ -38,6 +39,10 @@ Gotchas learned the hard way:
   `refresh_unity scope=all` (or restart) before `manage_components add` can find the type.
 - **Texture import settings:** edit the `.png.meta` directly (the MCP `manage_texture
   set_import_settings` arg didn't serialize in our client).
+- **Manual MCP fallback:** if Codex's native MCP wrapper cannot handshake but port 8080
+  responds, raw JSON-RPC can still work. Initialize against `http://127.0.0.1:8080/mcp`,
+  keep the returned `mcp-session-id`, send `notifications/initialized`, then call tools and
+  resources directly.
 
 ## Project Structure
 ```
@@ -102,6 +107,10 @@ Player              # Rigidbody2D, BoxCollider2D, PlayerController2D
 - Ground check uses `Physics2D.OverlapBox` against a `groundLayer` LayerMask
 - Enemy ground/wall/ledge checks should also use dimensioned checks (box/capsule style) rather
   than radius-only circles once tuned, matching the player ground-check pattern
+- Enemy target detection must not trust layer masks alone while Player and enemies share
+  `Default`; filter targets by `IPlayerDamageReceiver2D` so enemies do not chase or bite each other
+- RoboSpider movement is path-loop based, not raycast-crawler based; do not reintroduce
+  `SurfaceProbe`, `ForwardProbe`, or corner-raycast fallback behavior
 - Keep physics in `FixedUpdate`, input reading in `Update`
 - Prefer direct `rb.linearVelocity` assignment for snappy platformer controls
 
@@ -127,8 +136,12 @@ Player              # Rigidbody2D, BoxCollider2D, PlayerController2D
 - Ctrl/Cmd+R resets the Player to spawn (`PlayerController2D.ResetToSpawn`)
 - Multilayer parallax background working (`ParallaxLayer2D`, Industrial set)
 - Composite Collider 2D being set up for tile seam fix
-- Next: coyote time, jump buffering, variable jump height, fall multiplier
-- Then: 8-direction mouse aim and shotgun recoil mechanic
+- Coyote time, jump buffering, variable jump, fall multiplier, 8-direction mouse aim, and
+  shotgun recoil are in place
+- RoboDog, RoboSpider, and Drone enemy asset folders are controller-ready with prefabs/controllers
+- RoboDog uses simple patrol/chase/attack behavior; RoboSpider follows a generated surface loop;
+  Drone remains a flying ram attacker
+- Current focus: greybox enemy/combat iteration in SampleScene
 
 ## Testing
 - No automated test framework set up yet

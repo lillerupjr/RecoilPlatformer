@@ -80,3 +80,9 @@ Hard-won gotchas:
   set_import_settings` arg didn't serialize in our client).
 - **Asset moves/renames go through `manage_asset`** (not `git mv`) so `.meta` files travel and
   GUID references survive.
+- **Manual MCP fallback:** if Codex's native MCP wrapper cannot handshake but
+  `http://127.0.0.1:8080/mcp` responds, raw JSON-RPC can still drive Unity. POST
+  `initialize`, read the `mcp-session-id` response header, POST `notifications/initialized`
+  with that session id, then call `tools/list`, `resources/read`, or `tools/call` using the
+  same header. This has been used successfully for `refresh_unity`, `read_console`, Play Mode
+  smoke checks, and editor state reads.

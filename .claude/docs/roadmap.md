@@ -11,4 +11,4 @@ current focus. Keep this in sync as milestones land — it's the versioned sourc
 5. ~~Composite Collider 2D tile seam fix~~ (done)
 6. ~~Improved movement (coyote time, jump buffer, variable jump, fall multiplier)~~ (done)
 7. ~~8-direction mouse aim + shotgun recoil~~ (done)
-8. Greybox test room — **next**
+8. Greybox test room + enemy/combat iteration - **next**

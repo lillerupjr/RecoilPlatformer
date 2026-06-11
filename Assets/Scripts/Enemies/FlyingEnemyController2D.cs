@@ -263,6 +263,12 @@ public abstract class FlyingEnemyController2D : MonoBehaviour
                 continue;
             }
 
+            IPlayerDamageReceiver2D receiver = hit.GetComponentInParent<IPlayerDamageReceiver2D>();
+            if (receiver == null)
+            {
+                continue;
+            }
+
             float sqrDistance = ((Vector2)hit.transform.position - (Vector2)transform.position).sqrMagnitude;
             if (sqrDistance >= bestSqrDistance)
             {
