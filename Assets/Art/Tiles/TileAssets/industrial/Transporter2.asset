@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7878762838929a947931f4cb380a3529, type: 3}
+  m_Name: Transporter2
+  m_EditorClassIdentifier: Assembly-CSharp::AnimatedTile2D
+  frames:
+  - {fileID: -2746252997884475072, guid: 4359a30fd72340e438fb885ca2f9d0a6, type: 3}
+  - {fileID: -6005522321441884027, guid: 4359a30fd72340e438fb885ca2f9d0a6, type: 3}
+  - {fileID: 4432130506680215828, guid: 4359a30fd72340e438fb885ca2f9d0a6, type: 3}
+  - {fileID: 2772733868730058673, guid: 4359a30fd72340e438fb885ca2f9d0a6, type: 3}
+  speed: 8
+  color: {r: 1, g: 1, b: 1, a: 1}
+  colliderType: 1
+  pushSpeed: 4

@@ -53,10 +53,9 @@ public class ShotgunRecoil2D : MonoBehaviour
     [Header("Recoil")]
     [Tooltip("Impulse magnitude in velocity units (Rigidbody2D mass is 1).")]
     [SerializeField] private float recoilForce = 14f;
-    [Tooltip("Seconds the controller yields horizontal control so the impulse carries.")]
+    [Tooltip("Seconds the controller yields horizontal control so a sideways impulse carries. "
+        + "Pure vertical shots ignore this (the double jump keeps full air control).")]
     [SerializeField] private float controlLockout = 0.12f;
-    [Tooltip("Clamp total speed right after a shot. 0 = uncapped.")]
-    [SerializeField] private float maxRecoilSpeed = 0f;
 
     [Header("Pogo")]
     [Tooltip("How far the pogo probe reaches along the aim, in world units.")]
@@ -87,6 +86,9 @@ public class ShotgunRecoil2D : MonoBehaviour
     private PlayerController2D controller;
     private Camera cam;
     private float cooldownTimer;
+    // Duration of the cooldown currently counting down (full fireCooldown, or the shorter pogo
+    // grace). Used so the HUD energy bar sweeps the full 0->1 either way.
+    private float lastCooldownDuration = 1f;
     private Vector2 aimDirection = Vector2.right;
     private float snappedAngle;
     private int lastArmKey = int.MinValue;
@@ -94,6 +96,11 @@ public class ShotgunRecoil2D : MonoBehaviour
     private Vector3 armPivotBaseScale = Vector3.one;
     private Vector3 gunBaseLocalPos;
     private bool fireQueued;
+
+    // Weapon readiness for the HUD energy bar: 1 = charged/ready to fire, 0 = just fired.
+    // Recharges as the cooldown counts down; snaps back toward full quickly after a pogo refresh.
+    public float CooldownNormalized =>
+        lastCooldownDuration <= 0f ? 1f : Mathf.Clamp01(1f - cooldownTimer / lastCooldownDuration);
 
     private void Awake()
     {
@@ -252,10 +259,14 @@ public class ShotgunRecoil2D : MonoBehaviour
 
         // Recoil pushes opposite the aim direction (extra impulse on a pogo).
         float force = recoilForce + (pogo ? pogoBonus : 0f);
-        controller.ApplyRecoil(-aimDirection * force, controlLockout, maxRecoilSpeed);
+        controller.ApplyRecoil(-aimDirection * force, controlLockout);
         FirePellets();
 
-        cooldownTimer = pogo ? pogoGracePeriod : fireCooldown;
+        // Weapon-punch shake on every shot (the connecting-hit shake is layered on by EnemyHit).
+        GameFeel.ShotgunFired();
+
+        lastCooldownDuration = pogo ? pogoGracePeriod : fireCooldown;
+        cooldownTimer = lastCooldownDuration;
         fireQueued = false;
     }
 

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class PlayerController2D : MonoBehaviour
 {
@@ -16,12 +17,14 @@ public class PlayerController2D : MonoBehaviour
     [Tooltip("Extra gravity factor applied while falling so the descent feels weighty.")]
     [SerializeField] private float fallMultiplier = 2.5f;
 
-    [Header("Recoil")]
-    [Tooltip("Cancels this fraction of the velocity that opposes a recoil impulse before it is "
-        + "applied. 0 = pure additive (recoil feels weak when fired into fast momentum, e.g. a "
-        + "hard fall); 1 = recoil lands consistently regardless of incoming speed.")]
-    [Range(0f, 1f)]
-    [SerializeField] private float recoilOpposingCancel = 1f;
+    [Header("Speed Limits")]
+    [Tooltip("Caps horizontal speed (units/s). Bounds how far a horizontal recoil dash can "
+        + "accumulate. Walking is unaffected as long as this stays above moveSpeed. 0 = uncapped.")]
+    [SerializeField] private float maxHorizontalSpeed = 18f;
+    [Tooltip("Terminal fall speed (units/s). Caps how fast gravity can pull the player down. "
+        + "Upward launches are bounded by the recoil/jump force itself (vertical recoil SETS "
+        + "velocity rather than adding), so only the fall is capped here. 0 = uncapped.")]
+    [SerializeField] private float maxFallSpeed = 20f;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
@@ -43,6 +46,7 @@ public class PlayerController2D : MonoBehaviour
     private float jumpBufferCounter;
     private bool jumpReleased;
     private float controlLockoutTimer;
+    private float conveyorVelocity;
     private Vector2 spawnPosition;
 
     private void Awake()
@@ -77,6 +81,7 @@ public class PlayerController2D : MonoBehaviour
         UpdateJumpTimers();
         Move();
         Jump();
+        ClampSpeed();
         FlipVisual();
         UpdateAnimation();
     }
@@ -96,12 +101,36 @@ public class PlayerController2D : MonoBehaviour
 
     private void CheckGrounded()
     {
-        isGrounded = Physics2D.OverlapBox(
+        Collider2D[] hits = Physics2D.OverlapBoxAll(
             groundCheck.position,
             groundCheckSize,
             0f,
             groundLayer
         );
+        isGrounded = hits.Length > 0;
+
+        // Sample the tile under the feet for a conveyor push (applied in Move). A small downward
+        // offset lands the lookup in the surface tile's cell rather than the empty cell above it.
+        conveyorVelocity = 0f;
+        foreach (Collider2D hit in hits)
+        {
+            Tilemap tilemap = hit.GetComponent<Tilemap>();
+            if (tilemap == null)
+            {
+                tilemap = hit.GetComponentInParent<Tilemap>();
+            }
+            if (tilemap == null)
+            {
+                continue;
+            }
+
+            Vector3Int cell = tilemap.WorldToCell(groundCheck.position + Vector3.down * 0.1f);
+            if (tilemap.GetTile(cell) is AnimatedTile2D tile && tile.PushSpeed != 0f)
+            {
+                conveyorVelocity = tile.PushSpeed;
+                break;
+            }
+        }
     }
 
     private void Move()
@@ -113,36 +142,66 @@ public class PlayerController2D : MonoBehaviour
             return;
         }
 
+        // moveInput * moveSpeed is the walk; conveyorVelocity is the belt drift under the feet
+        // (0 when not on a conveyor or airborne). ClampSpeed bounds the total.
         rb.linearVelocity = new Vector2(
-            moveInput * moveSpeed,
+            moveInput * moveSpeed + conveyorVelocity,
             rb.linearVelocity.y
         );
     }
 
-    // Entry point for the shotgun recoil. Kept here so all velocity mutation lives in one
-    // place; ShotgunRecoil2D computes the impulse and calls in.
-    public void ApplyRecoil(Vector2 impulse, float lockout, float maxSpeed)
+    // Entry point for the shotgun recoil. Kept here so all velocity mutation lives in one place;
+    // ShotgunRecoil2D computes the impulse and calls in. The impulse is decomposed per axis:
+    //   - Horizontal is ADDITIVE momentum (a sideways shot carries / chains).
+    //   - Vertical is a "double jump": it CANCELS current vertical velocity and SETS it to the
+    //     recoil's vertical part, so every up-shot launches consistently and can't stack to
+    //     infinity. A purely horizontal shot has impulse.y == 0 and never touches vertical
+    //     (and vice-versa).
+    public void ApplyRecoil(Vector2 impulse, float lockout)
     {
-        // Cancel the part of current velocity fighting the recoil so incoming momentum (e.g. a
-        // fast fall) doesn't eat the impulse — keeps recoil feeling consistent across speeds.
-        if (recoilOpposingCancel > 0f && impulse.sqrMagnitude > 0.0001f)
+        Vector2 v = rb.linearVelocity;
+
+        // Horizontal: add to existing momentum.
+        v.x += impulse.x;
+
+        // Vertical: cancel-and-set "double jump", using the recoil's actual vertical component. A
+        // diagonal shot therefore gives a proportionally smaller vertical launch (~0.71x force) plus
+        // its horizontal half (added above). A purely horizontal shot has impulse.y == 0 and never
+        // touches vertical.
+        if (Mathf.Abs(impulse.y) > 0.0001f)
         {
-            Vector2 dir = impulse.normalized;
-            float opposing = Vector2.Dot(rb.linearVelocity, dir);
-            if (opposing < 0f)
-            {
-                rb.linearVelocity -= dir * (opposing * recoilOpposingCancel);
-            }
+            v.y = impulse.y;
         }
 
-        rb.AddForce(impulse, ForceMode2D.Impulse);
+        rb.linearVelocity = v;
+        ClampSpeed();
 
-        if (maxSpeed > 0f && rb.linearVelocity.magnitude > maxSpeed)
+        // Only yield horizontal control when the shot actually pushed sideways — a pure vertical
+        // shot keeps full air control so the double jump feels responsive.
+        if (Mathf.Abs(impulse.x) > 0.0001f)
         {
-            rb.linearVelocity = rb.linearVelocity.normalized * maxSpeed;
+            controlLockoutTimer = Mathf.Max(controlLockoutTimer, lockout);
+        }
+    }
+
+    // Per-axis speed limits. Horizontal is clamped symmetrically; vertical only caps the fall
+    // (terminal velocity) — upward launches are already bounded by the recoil/jump force since
+    // vertical recoil sets velocity rather than accumulating it.
+    private void ClampSpeed()
+    {
+        Vector2 v = rb.linearVelocity;
+
+        if (maxHorizontalSpeed > 0f)
+        {
+            v.x = Mathf.Clamp(v.x, -maxHorizontalSpeed, maxHorizontalSpeed);
         }
 
-        controlLockoutTimer = Mathf.Max(controlLockoutTimer, lockout);
+        if (maxFallSpeed > 0f && v.y < -maxFallSpeed)
+        {
+            v.y = -maxFallSpeed;
+        }
+
+        rb.linearVelocity = v;
     }
 
     private void Jump()
@@ -225,7 +284,11 @@ public class PlayerController2D : MonoBehaviour
     // Public so PlayerHealth2D can respawn the player on death (and the reset hotkey uses it).
     public void ResetToSpawn()
     {
-        // rb.position teleports cleanly without an interpolation smear.
+        // Set BOTH the transform and the body so the teleport is visible THIS frame. rb.position
+        // alone only applies on the next physics step — which never arrives while a hit-stop has
+        // Time.timeScale at 0 — leaving transform.position stale and the death-plane check
+        // re-firing every frame (player frozen under the map).
+        transform.position = spawnPosition;
         rb.position = spawnPosition;
         rb.linearVelocity = Vector2.zero;
     }

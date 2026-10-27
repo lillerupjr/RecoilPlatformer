@@ -174,7 +174,7 @@ GameObject:
   - component: {fileID: 5487142111073248558}
   - component: {fileID: 1327509593883318026}
   - component: {fileID: 1907252093562566234}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: RoboSpider
   m_TagString: Untagged
   m_Icon: {fileID: 0}

@@ -45,6 +45,9 @@ public class EnemyHealth2D : MonoBehaviour, IDamageable2D
         lastHitTime = Time.time;
         currentHealth = Mathf.Max(0, currentHealth - amount);
 
+        // Shake + hit stop on every connecting pellet (including the killing blow).
+        GameFeel.EnemyHit();
+
         if (currentHealth == 0)
         {
             Died?.Invoke(damage);

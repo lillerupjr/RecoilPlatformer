@@ -11,6 +11,10 @@ public class PlayerHealth2D : MonoBehaviour, IPlayerDamageReceiver2D
     [Tooltip("Seconds of invulnerability after taking a hit.")]
     [SerializeField] private float hitInvulnerability = 0.8f;
 
+    [Header("Death Plane")]
+    [Tooltip("Falling below this world Y counts as falling off the map and kills the player.")]
+    [SerializeField] private float killY = -10f;
+
     [Header("Knockback")]
     [Tooltip("Impulse magnitude applied away from the enemy on a non-fatal hit.")]
     [SerializeField] private float knockbackForce = 8f;
@@ -18,8 +22,6 @@ public class PlayerHealth2D : MonoBehaviour, IPlayerDamageReceiver2D
     [SerializeField] private float knockbackUpward = 0.6f;
     [Tooltip("Seconds of control lockout so the knockback isn't immediately overridden by input.")]
     [SerializeField] private float knockbackLockout = 0.2f;
-    [Tooltip("Speed cap applied after the knockback impulse (0 = uncapped).")]
-    [SerializeField] private float maxKnockbackSpeed = 0f;
 
     [Header("Hit Feedback")]
     [Tooltip("Seconds between alpha toggles while blinking during i-frames.")]
@@ -60,6 +62,12 @@ public class PlayerHealth2D : MonoBehaviour, IPlayerDamageReceiver2D
 
     private void Update()
     {
+        // Fell off the map — always fatal, regardless of i-frames.
+        if (IsAlive && transform.position.y < killY)
+        {
+            Kill();
+        }
+
         // Blink the player's renderers for the full i-frame window so invulnerability is readable.
         if (Time.time < invulnerableUntil)
         {
@@ -113,6 +121,9 @@ public class PlayerHealth2D : MonoBehaviour, IPlayerDamageReceiver2D
         lives = Mathf.Max(0, lives - amount);
         invulnerableUntil = Time.time + hitInvulnerability;
 
+        // Biggest shake + freeze when the player gets hit.
+        GameFeel.PlayerHit();
+
         if (lives == 0)
         {
             // No knockback on death — Respawn -> ResetToSpawn zeroes velocity anyway.
@@ -123,6 +134,35 @@ public class PlayerHealth2D : MonoBehaviour, IPlayerDamageReceiver2D
 
         ApplyKnockback(hit);
         Damaged?.Invoke(hit);
+    }
+
+    // Instant death not tied to an enemy: falling off the map, and (later) instant-kill hazards.
+    // Bypasses i-frames — a pit always kills — and skips knockback (nothing to be pushed from).
+    public void Kill()
+    {
+        if (!IsAlive)
+        {
+            return;
+        }
+
+        lives = Mathf.Max(0, lives - 1);
+        invulnerableUntil = Time.time + hitInvulnerability;
+        GameFeel.PlayerHit();
+
+        if (lives == 0)
+        {
+            Died?.Invoke(default);
+            Respawn();
+            return;
+        }
+
+        // Non-fatal: teleport straight back to spawn (can't ride a knockback out of a pit).
+        if (controller != null)
+        {
+            controller.ResetToSpawn();
+        }
+
+        Damaged?.Invoke(default);
     }
 
     private void ApplyKnockback(EnemyHitInfo2D hit)
@@ -155,7 +195,7 @@ public class PlayerHealth2D : MonoBehaviour, IPlayerDamageReceiver2D
         direction.y = knockbackUpward;
         direction = direction.normalized;
 
-        controller.ApplyRecoil(direction * knockbackForce, knockbackLockout, maxKnockbackSpeed);
+        controller.ApplyRecoil(direction * knockbackForce, knockbackLockout);
     }
 
     private void Respawn()

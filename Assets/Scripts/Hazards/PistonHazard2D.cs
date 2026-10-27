@@ -2,27 +2,27 @@ using UnityEngine;
 
 // Telegraphed slam hazard. The Hammer sprite's own frames punch the head ~2 units DOWN within the
 // frame while the mount stays fixed (the art is authored for this), so the visual slam is the
-// Animator's Slam clip — NOT a transform move. This controller just paces the rhythm and turns the
-// HammerHead hitbox on during the strike frames. The hitbox sits at the head's extended position
-// and is non-pogoable, so the player can't bounce off the piston.
+// Animator's Slam clip — NOT a transform move. This controller paces the rhythm; the HammerHead
+// hitbox is turned on/off by ANIMATION EVENTS on the Slam clip (EnableHammerDamage /
+// DisableHammerDamage), placed on the down frames so the hit window lands exactly when the head is
+// squashing — no drift between the timer and the visual. The hitbox is non-pogoable, so the player
+// can't bounce off the piston.
 public class PistonHazard2D : MonoBehaviour
 {
     private static readonly int SlamHash = Animator.StringToHash("Slam");
 
     [Header("References")]
     [SerializeField] private Animator animator;
-    [Tooltip("Damage component on the HammerHead child; enabled only during the strike frames.")]
+    [Tooltip("Damage component on the HammerHead child; enabled only during the down frames "
+        + "(driven by the Slam clip's animation events).")]
     [SerializeField] private HazardContactDamage2D hammerDamage;
 
     [Header("Timing")]
     [Tooltip("Seconds held raised between slams (the telegraph pause).")]
     [SerializeField] private float slamInterval = 2f;
-    [Tooltip("Length of the Slam clip; after this the piston is raised again (8 frames @ 12fps).")]
+    [Tooltip("Length of the Slam clip; after this the piston is raised again (8 frames @ 12fps). "
+        + "Acts as a backstop that force-clears the hit window if the disable event is missed.")]
     [SerializeField] private float slamLength = 0.667f;
-    [Tooltip("Seconds into the slam when the head is down and the hit window opens.")]
-    [SerializeField] private float damageStart = 0.12f;
-    [Tooltip("Seconds into the slam when the head lifts and the hit window closes.")]
-    [SerializeField] private float damageEnd = 0.42f;
 
     private float timer;
     private bool slamming;
@@ -52,9 +52,9 @@ public class PistonHazard2D : MonoBehaviour
             return;
         }
 
-        // Dangerous only while the head is down (the strike frames of the Slam clip).
-        SetDamageActive(timer >= damageStart && timer < damageEnd);
-
+        // Damage on/off is driven by the Slam clip's animation events (EnableHammerDamage /
+        // DisableHammerDamage). Here we only end the cycle; the SetDamageActive(false) is a
+        // backstop in case the disable event was missed (e.g. the clip was interrupted).
         if (timer >= slamLength)
         {
             slamming = false;
@@ -62,6 +62,12 @@ public class PistonHazard2D : MonoBehaviour
             SetDamageActive(false);
         }
     }
+
+    // Animation-event hooks fired by the Slam clip on the head's down frames. Public + parameterless
+    // so the AnimationClip can call them on this component (same GameObject as the Animator).
+    public void EnableHammerDamage() => SetDamageActive(true);
+
+    public void DisableHammerDamage() => SetDamageActive(false);
 
     private void StartSlam()
     {
@@ -75,9 +81,11 @@ public class PistonHazard2D : MonoBehaviour
 
     private void SetDamageActive(bool active)
     {
-        if (hammerDamage != null && hammerDamage.enabled != active)
+        if (hammerDamage != null)
         {
-            hammerDamage.enabled = active;
+            // Gate via the explicit flag, not the component's `enabled` — disabling the behaviour
+            // does not reliably stop OnTriggerStay2D once the player is already overlapping.
+            hammerDamage.DamageActive = active;
         }
     }
 

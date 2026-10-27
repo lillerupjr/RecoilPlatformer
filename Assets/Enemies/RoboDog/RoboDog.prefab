@@ -301,7 +301,7 @@ GameObject:
   - component: {fileID: 6563354643726040980}
   - component: {fileID: 116387930526662642}
   - component: {fileID: 607357460657220049}
-  m_Layer: 0
+  m_Layer: 9
   m_Name: RoboDog
   m_TagString: Untagged
   m_Icon: {fileID: 0}
