@@ -9,6 +9,10 @@ controls with 8-direction quantized mouse aim.
 > enemy and combat iteration. See the [roadmap](.claude/docs/roadmap.md) for what's done and
 > what's next.
 
+**▶ [Play in browser](https://lillerupjr.github.io/RecoilPlatformer/)** — latest WebGL build,
+auto-deployed from `main`. (Live once the one-time CI setup below is done and the first build
+has run.)
+
 ## Core mechanic
 
 The shotgun recoil is the identity of the game. Recoil is applied as a physics impulse in the
@@ -60,6 +64,38 @@ input resumes, so recoil actually moves you instead of being erased by ground-mo
 
 `Assets/Scenes/Template.unity` is the canonical base for new level scenes (scene-per-level);
 `level_1.unity` is an in-progress level.
+
+## Play in browser (WebGL build)
+
+A WebGL build is published to **GitHub Pages** at
+`https://lillerupjr.github.io/RecoilPlatformer/`, built and deployed automatically by the
+[`Deploy WebGL to GitHub Pages`](.github/workflows/deploy-webgl.yml) GitHub Actions workflow
+on every push to `main` (and on manual dispatch). The README can only *link* to it — GitHub
+strips interactive content from the rendered README itself, so the game can't be embedded
+inline.
+
+The build uses Brotli compression with **Decompression Fallback enabled**
+(`webGLDecompressionFallback: 1`), which is required for WebGL to load on GitHub Pages — Pages
+doesn't send the `Content-Encoding` headers a non-fallback compressed build needs.
+
+### One-time setup (required before the first deploy works)
+
+The workflow builds with [GameCI](https://game.ci/), which needs a Unity license and Pages
+enabled:
+
+1. **Add a Unity license to repo secrets** (Settings → Secrets and variables → Actions):
+   - *Personal license:* `UNITY_EMAIL`, `UNITY_PASSWORD`, and `UNITY_LICENSE` (the contents of
+     the `.ulf` activation file — see GameCI's
+     [activation guide](https://game.ci/docs/github/activation)).
+   - *Pro/Plus license:* `UNITY_EMAIL`, `UNITY_PASSWORD`, and `UNITY_SERIAL` instead (uncomment
+     the `UNITY_SERIAL` line in the workflow).
+2. **Enable Pages:** Settings → Pages → Build and deployment → **Source: GitHub Actions**.
+3. Push to `main` (or run the workflow manually from the Actions tab). The first run activates
+   the license, builds WebGL, and deploys; the Pages URL appears on the workflow's `deploy` job.
+
+> **Note:** the editor version is auto-detected from `ProjectSettings/ProjectVersion.txt`
+> (`6000.4.10f1`). A matching GameCI editor Docker image must exist for that version; if the
+> build can't find the image, pin `unityVersion` in the workflow to the nearest available one.
 
 ## Project structure
 

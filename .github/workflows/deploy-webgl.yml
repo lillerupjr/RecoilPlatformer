@@ -1,0 +1,76 @@
+name: Deploy WebGL to GitHub Pages
+
+# Builds the Unity project for WebGL with GameCI and publishes it to GitHub Pages.
+# One-time setup required before this can succeed — see the README section
+# "Play in browser (WebGL build)":
+#   1. Add repo secrets: UNITY_LICENSE (+ UNITY_EMAIL / UNITY_PASSWORD) for a
+#      Personal license, or UNITY_SERIAL (+ email/password) for Pro/Plus.
+#   2. Settings > Pages > Build and deployment > Source = "GitHub Actions".
+# The editor version is auto-detected from ProjectSettings/ProjectVersion.txt
+# (currently 6000.4.10f1); a matching GameCI editor image must exist for it.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least-privilege permissions the Pages deploy needs.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; newer pushes supersede in-flight ones.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build WebGL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Cache the Library folder so re-imports are fast on later runs.
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-WebGL-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-WebGL-
+            Library-
+
+      - name: Build project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          # For a Pro/Plus license, drop UNITY_LICENSE above and set UNITY_SERIAL:
+          # UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          targetPlatform: WebGL
+
+      # unity-builder writes the player to build/<platform>/<buildName>;
+      # with the defaults that is build/WebGL/WebGL (index.html lives here).
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/WebGL/WebGL
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
